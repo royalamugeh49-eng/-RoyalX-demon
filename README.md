@@ -9,4 +9,4 @@ Features:
 - Practice BUY/SELL
 - 100% Free
 
-Built by Royal from Nigeria.
+Built by Royal from Nigeria
