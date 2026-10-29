@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoyalX - Forex Trading</title>
+<style>
+body{background:#0a0e13;color:#fff;font-family:Arial;margin:0;padding:10px}
+.header{background:#111722;padding:15px;border-radius:10px;display:flex;justify-content:space-between}
+.balance{color:#00ff88;font-size:22px;font-weight:bold}
+.card{background:#151c28;padding:15px;border-radius:10px;margin-top:10px}
+.price{font-size:28px;color:#00ff88}
+.btn{width:48%;padding:15px;border:none;border-radius:8px;font-weight:bold;font-size:18px}
+.buy{background:#00c853;color:#fff}
+.sell{background:#ff3d00;color:#fff}
+.trade-history{font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="header">
+<div>👑 RoyalX</div>
+<div class="balance">$<span id="bal">10000.00</span></div>
+</div>
+
+<div class="card">
+<div>EUR/USD <span id="symPrice" class="price">1.0845</span> <span id="change" style="font-size:14px">+0.12%</span></div>
+<canvas id="chart" width="350" height="150" style="background:#0a0e13;width:100%"></canvas>
+<div style="display:flex;justify-content:space-between;margin-top:10px">
+<button class="btn sell" onclick="trade('SELL')">SELL</button>
+<button class="btn buy" onclick="trade('BUY')">BUY</button>
+</div>
+<div style="margin-top:10px">
+Amount: $<input id="amt" type="number" value="100" style="width:80px;padding:5px">
+</div>
+</div>
+
+<div class="card">
+<b>Open Trades</b>
+<div id="trades" class="trade-history">No trades yet</div>
+</div>
+
+<script>
+let balance = 10000;
+let price = 1.0845;
+let trades = [];
+let chartData = [];
+for(let i=0;i<50;i++) chartData.push(1.08+Math.random()*0.01);
+
+function updatePrice(){
+ price += (Math.random()-0.5)*0.001;
+ document.getElementById('symPrice').innerText = price.toFixed(4);
+ chartData.push(price);
+ if(chartData.length>50) chartData.shift();
+ drawChart();
+ // update P&L
+ trades.forEach(t=>{
+   let pnl = t.type=='BUY' ? (price - t.entry)*10000 : (t.entry - price)*10000;
+   pnl = pnl * (t.amount/100);
+   document.getElementById('pnl-'+t.id).innerText = pnl.toFixed(2);
+ });
+}
+function drawChart(){
+ let c=document.getElementById('chart'),ctx=c.getContext('2d');
+ ctx.clearRect(0,0,350,150);
+ ctx.strokeStyle='#00ff88';ctx.beginPath();
+ let min=Math.min(...chartData),max=Math.max(...chartData);
+ chartData.forEach((p,i)=>{
+   let x=i*7, y=150-((p-min)/(max-min||0.001))*120-10;
+   if(i==0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+ });
+ ctx.stroke();
+}
+function trade(type){
+ let amt=parseFloat(document.getElementById('amt').value);
+ if(amt>balance){alert('Insufficient balance');return;}
+ let id=Date.now();
+ trades.push({id,type,entry:price,amount:amt});
+ balance-=2; // fee
+ document.getElementById('bal').innerText=balance.toFixed(2);
+ let div=document.createElement('div');
+ div.innerHTML=`${type} ${amt}$ @ ${price.toFixed(4)} P&L: $<span id="pnl-${id}">0.00</span> <button onclick="closeTrade(${id})">Close</button>`;
+ document.getElementById('trades').appendChild(div);
+}
+function closeTrade(id){
+ let t=trades.find(x=>x.id==id);
+ let pnl = t.type=='BUY' ? (price - t.entry)*10000 : (t.entry - price)*10000;
+ pnl = pnl * (t.amount/100);
+ balance+=t.amount+pnl;
+ document.getElementById('bal').innerText=balance.toFixed(2);
+ trades=trades.filter(x=>x.id!=id);
+ event.target.parentElement.remove();
+}
+setInterval(updatePrice,1000);
+drawChart();
+</script>
+</body>
+</html>
